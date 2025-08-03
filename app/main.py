@@ -37,14 +37,23 @@ class PatientFeatures(BaseModel):
 def load_artifacts() -> None:
     """Load model and preprocessing artifacts into memory."""
     global model, preprocessor, scaler, label_encoder
-    model_path = MODEL_DIR / "mlp_tf_model"
+
+    model_file = MODEL_DIR / "mlp_tf_model.keras"
+    model_dir = MODEL_DIR / "mlp_tf_model"
     pipeline_path = MODEL_DIR / "mlp_tf_pipeline.pkl"
-    if not model_path.exists() or not pipeline_path.exists():
+
+    if model_file.exists():
+        model = tf.keras.models.load_model(model_file)
+    elif model_dir.exists():
+        model = tf.keras.models.load_model(model_dir)
+    else:
         raise RuntimeError(
-            "Model or pipeline not found. Set MODEL_DIR to directory containing"
-            " 'mlp_tf_model' and 'mlp_tf_pipeline.pkl'."
+            "Model not found. Expected 'mlp_tf_model.keras' or 'mlp_tf_model/' in MODEL_DIR."
         )
-    model = tf.keras.models.load_model(model_path)
+
+    if not pipeline_path.exists():
+        raise RuntimeError("Pipeline not found. Expected 'mlp_tf_pipeline.pkl' in MODEL_DIR.")
+
     pipeline = joblib.load(pipeline_path)
     preprocessor = pipeline["preprocessor"]
     scaler = pipeline["scaler"]
